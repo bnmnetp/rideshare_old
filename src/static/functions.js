@@ -156,6 +156,9 @@ function makeRideTable() {
         if (rides[r].drivername!=null){
 	c0.innerHTML = '<a href="/driverrating?drivernum=' + rides[r].driver + '">'+ rides[r].drivername + '</a>';
         }
+        else{
+        c0.innerHTML= "needs driver";
+        }
 	var c1 = row.insertCell(1);
 	c1.innerHTML = rides[r].max_passengers - rides[r].num_passengers;
 	var c3 = row.insertCell(2);
@@ -1167,54 +1170,6 @@ function checkSame(marker)
 function putListener()
 {
    clickListener = google.maps.event.addListener(map, "click", getAddress);
-}
-
-
-rad = function(x) {return x*Math.PI/180;}
-
-distHaversine = function(p1, p2) {
-  var R = 6371;
-  var dLat  = rad(p2.lat() - p1.lat());
-  var dLong = rad(p2.lng() - p1.lng());
-
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) * Math.sin(dLong/2) * Math.sin(dLong/2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  var d = R * c;
-
-  return d.toFixed(3);
-}
-function pathListener(marker)
-{
-  
-  google.maps.event.addListener(marker,"mouseover", function(){
-        directionsDisplay.setMap(map)
-	var request = {
-           origin:new google.maps.LatLng(mycollege.lat,mycollege.lng),
-           destination:marker.getPosition(),
-           travelMode: google.maps.TravelMode.DRIVING
-         };
-        directionsService.route(request, function(result, status) {
-              if (status == google.maps.DirectionsStatus.OK) {
-                directionsDisplay.setDirections(result);
-                 pointsArray = result.routes[0].overview_path;
-                 for (var i=0;i<pointsArray.length; i++){
-                     for (var j=0;j<overlays.length;j++){
-                          distance = distHaversine(pointsArray[i],overlays[j].getPosition());
-                          if (distance <100){
-                             alert("Found One");
-                             alert(distance);
-                         }
-                     }
-                 }
-              }
-        });
-  });
-
-  google.maps.event.addListener(marker,"mouseout",function(){
-        directionsDisplay.setMap(null)
-  });
-                                                                     
 }
 
 
