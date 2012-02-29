@@ -55,12 +55,17 @@ part_of_day_strings = { "0": "Morning", "1": "Afternoon", "2": "Evening" }
 
 aquery = db.Query(College)
 if aquery.count()==0:
-  # development site
-   college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="193298730706524",appSecret="44d7cce20524dc91bf7694376aff9e1d")
-  # live site   
-   #college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="284196238289386",appSecret="07e3ea3ffda4aa08f8c597bccd218e75")   
+
+    # development site
+    college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="193298730706524",appSecret="44d7cce20524dc91bf7694376aff9e1d")
+    # live site
+    #college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="284196238289386",appSecret="07e3ea3ffda4aa08f8c597bccd218e75")
     #college = College(name= "LaCrosse University", address = "1725 State Street, La Crosse, WI", lat=43.812834, lng=-91.229022,appId="193298730706524",appSecret="44d7cce20524dc91bf7694376aff9e1d")
-   college.put()
+
+
+
+
+    college.put()
 
 
 
@@ -314,10 +319,10 @@ The Rideshare Team
             mail.send_mail(sender,announceAddr,subject,body)
         else:
             logging.debug(self.current_user.access_token)
-            graph = facebook.GraphAPI(self.current_user.access_token)
-            graph.put_object("me", "feed", message=body)
-            pageGraph = facebook.GraphAPI("193298730706524|48e2ec8c9b0ad817c89ad4f6.1-513076490|144494142268497|pZGsDMZLDxcSRrd_1FF5M_Q_qrY")
-            pageGraph.put_object("144494142268497","feed",message=body)
+            #graph = facebook.GraphAPI(self.current_user.access_token)
+            #graph.put_object("me", "feed", message=body)
+            #pageGraph = facebook.GraphAPI("193298730706524|48e2ec8c9b0ad817c89ad4f6.1-513076490|144494142268497|pZGsDMZLDxcSRrd_1FF5M_Q_qrY")
+            #pageGraph.put_object("144494142268497","feed",message=body)
 
 class AddPassengerHandler(BaseHandler):
     """
@@ -542,6 +547,36 @@ class SubmitRatingHandler(BaseHandler):
         user.put()
         doRender(self, "submit.html",{})
         self.redirect("/home")
+
+class MovePassengerHandler(BaseHandler):
+    def post(self):
+        user= self.current_user
+        keys = self.request.get("keys")
+        keyList = keys.split("|")
+        pRide= Ride.get(keyList[0])
+        dRide= Ride.get(keyList[1])
+        logging.debug(dRide)
+        for passenger in pRide.passengers:
+            if dRide.passengers:
+                dRide.passengers.append(passenger)
+            else:
+                dRide.passengers=[passenger]
+        dRide.num_passengers = dRide.num_passengers +len(pRide.passengers)
+        dRide.put()
+        db.delete(keyList[0])
+
+        greeting = ''
+        if user:
+            greeting = ("Welcome, %s! (<a href=\"%s\">sign out</a>) Go to your <a href='/home'>Home Page</a>" %
+                        (user.nickname(), users.create_logout_url("/")))
+        message = 'You have added passengers to your ride.'
+        path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
+        self.response.out.write(template.render(path, {
+            'greeting' : greeting,
+            'message' : message,
+            'mapkey':MAP_APIKEY,
+            }))
+        
 
 class HomeHandler(BaseHandler):
     """
@@ -813,7 +848,7 @@ class SignOutHandler(BaseHandler):
     def get(self):
         aquery = db.Query(College)
         mycollege= aquery.get()
-        doRender(self, 'logout.html', { 'logout_message': "Thanks for using the"+ mycollege.name + "Rideshare Website!"})
+        doRender(self, 'logout.html', { 'logout_message': "Thanks for using the "+ mycollege.name + " Rideshare Website!"})
 
 def doRender(handler, name='index.html', value={}):
     temp = os.path.join(os.path.dirname(__file__), 'templates/' + name)
@@ -913,6 +948,7 @@ def main():
         ('/submittext', SubmitRatingHandler),
         ('/driverrating',DriverRatingHandler),
         ('/school',SchoolErrorHandler),
+        ('/movepass', MovePassengerHandler),
         ('/ridesuccess',RideSuccessHandler),
         ('/connectride',ConnectPageHandler),
         ('/.*', IncorrectHandler),
