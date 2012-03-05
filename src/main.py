@@ -100,6 +100,7 @@ class MainHandler(BaseHandler):
             'college': mycollege,
             'address': mycollege.address,
             'nick' : user.nickname(),
+			'user': user.id,
             'logout':'/auth/logout',
             'mapkey':MAP_APIKEY,
             }))

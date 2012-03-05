@@ -38,10 +38,10 @@ function initialize(mess)
 
 	// Begin creation of Icons for Rides
 
-	var greenIconMarker = new google.maps.MarkerImage("http://www.google.com/mapfiles/dd-start.png",
-            new google.maps.Size(20,28),
+	var greenIconMarker = new google.maps.MarkerImage('static/carGreen.png',
+            new google.maps.Size(30,40),
             null,
-            new google.maps.Point(6,20));
+            new google.maps.Point(20,20));
 
         var shadow = new google.maps.MarkerImage("http://labs.google.com/ridefinder/images/mm_20_shadow.png",{
             size:new google.maps.Size(22,20)});
@@ -54,10 +54,10 @@ function initialize(mess)
 
 	gmarkerOptions = { icon:greenIcon };
 
-        var redIconMarker = new google.maps.MarkerImage("http://www.google.com/mapfiles/dd-end.png",
-            new google.maps.Size(20,28),
+        var redIconMarker = new google.maps.MarkerImage('static/carRed.png',
+            new google.maps.Size(30,40),
             null,
-            new google.maps.Point(6,20));
+            new google.maps.Point(20,20));
 
         var redIcon = {
             icon: redIconMarker,
@@ -82,10 +82,10 @@ function initialize(mess)
             };
         icons.my = myIcon;
 
-        var blueIconMarker = new google.maps.MarkerImage("http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png",
-            new google.maps.Size(30,28),
+        var blueIconMarker = new google.maps.MarkerImage('static/person.png',
+            new google.maps.Size(30,40),
             null,
-            new google.maps.Point(10,17));
+            new google.maps.Point(20,20));
 
         var blueshadow = new google.maps.MarkerImage('static/shadow.png',
             new google.maps.Size(29,16));
@@ -97,8 +97,23 @@ function initialize(mess)
 
         icons.blue = blueIcon;
 
+	var conMarker = new google.maps.MarkerImage('static/sportscar.png',
+			new google.maps.Size(30,40),
+			null,
+			new google.maps.Point(20,20));
+			
+	var conShadow = new google.maps.MarkerImage('static/shadow.png',
+			new google.maps.Size(30,0));
+			
+	var conIcon = {
+			icon:conMarker,
+			shadow:conShadow
+			};
+	icons.con =conIcon;
+
 	var mymarker = new google.maps.Marker(new google.maps.LatLng(43.313059,-91.799501));
         mymarker.setOptions(icons.my);
+        
 
         reqMarkerOptions = {icon:blueIcon};
         var centerLL = new google.maps.LatLng(43.313059,-91.799501);
@@ -109,7 +124,7 @@ function initialize(mess)
 	    zoom: 6
         };
         map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-
+		mymarker.setMap(map);
         directionsService = new google.maps.DirectionsService();
         directionsDisplay = new google.maps.DirectionsRenderer({preserveViewport:false});
         
@@ -133,7 +148,7 @@ function initialize(mess)
         }
         clickListener = google.maps.event.addListener(map, "click", getAddress);
     }
-    
+    getRidesForConnection();
     makeRideTable();
     
     if (mess) {
@@ -591,8 +606,6 @@ function addRideToMap(ride, rideNum)
         bmarker.setMap(map);
         overlays.push(bmarker);
         mc.addMarker(bmarker);
-        //pathListener(bmarker);
-        //checkSame(bmarker);
     }
     return ride.marker;
 }
@@ -601,17 +614,7 @@ function joinRideByNumber(rideNum) {
     rides[rideNum].marker.setMap(null);
     rides[rideNum].marker=null;
     var marker = addRideToMap(rides[rideNum], rideNum);
-    /*for (amarker in overlays){ 
-        alert(amarker);
-        if (marker.getPosition() == amarker.getPosition()){
-           windowOpen(marker.getPosition(),getPopupWindowMessage(rides[rideNum], 
-						    rideNum, 
-						    rides[rideNum].destination_lat,
-						    rides[rideNum].destination_long));
-           alert('HEY');
-           return;
-           }
-        }*/
+    
     overlays.push(marker);
     
     windowOpen(marker.getPosition(),getPopupWindowMessage(rides[rideNum], 
@@ -925,12 +928,8 @@ function showAddress(address1)
 		}
 		else 
 		{
-		    //map.setCenter(point, 13);
-		    //var marker = new GMarker(point);
-		    //map.addOverlay(marker);
                     var point = results[0].geometry.location;
                     windowOpen(new google.maps.LatLng(point.lat(),point.lng()),getNewRidePopupHTML(point.lat(), point.lng(), address1));
-		    //map.openInfoWindowHtml(point, getNewRidePopupHTML(point.lat(), point.lng(), address1));        
 		}
             }
         );
@@ -1172,7 +1171,101 @@ function putListener()
    clickListener = google.maps.event.addListener(map, "click", getAddress);
 }
 
+rad = function(x) {return x*Math.PI/180;}
 
+distHaversine = function(p1, p2) {
+    var R = 6371;
+    var dLat  = rad(p2.lat() - p1.lat());
+    var dLong = rad(p2.lng() - p1.lng());
+
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) * Math.sin(dLong/2) * Math.sin(dLong/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    var d = R * c;
+
+    return d.toFixed(3);
+}
+function getRidesForConnection(){
+	var drivernum = document.getElementById("idnum").value;
+	var driverRides = new Array();
+	var ndRides= new Array();
+	var inList = new Array();
+    var connectRides = new Array();
+
+    
+
+
+	for (var i=0;i<rides.length; i++){  //get driver rides
+	    if (rides[i].driver == drivernum){
+	        driverRides.push(rides[i]);
+	    }
+	    if (rides[i].driver == "needs driver"){ //get rides with no driver
+	        ndRides.push(rides[i]);
+	    }
+	}
+
+
+    for (var k=0;k<driverRides.length;k++){
+        var dRide = driverRides[k];
+        var request = {
+            origin:new google.maps.LatLng(43.313059,-91.799501),
+            destination:new google.maps.LatLng(dRide.destination_lat,dRide.destination_long),
+            travelMode: google.maps.TravelMode.DRIVING
+        };
+
+        directionsService.route(request, function(result, status) {
+            if (status == google.maps.DirectionsStatus.OK) {
+                var pointsArray = result.routes[0].overview_path;
+                for (var i=0;i<pointsArray.length; i++){
+                    for (var j=0;j<ndRides.length;j++){
+                        if (drivernum != ndRides[j].driver && inList.indexOf(ndRides[j].key)==-1 && ndRides[j].num_passengers<= (dRide.max_passengers-dRide.num_passengers) &&(dRide.destination_title ==ndRides[j].destination_title || dRide.start_point_title ==ndRides[j].start_point_title)){
+                            var distance = distHaversine(pointsArray[i],new google.maps.LatLng(ndRides[j].destination_lat,ndRides[j].destination_long));
+                            if (distance <100){
+								
+								
+								
+								infowindowtext = '<form name="connectForm" action="/movepass" method="post">';
+								infowindowtext += '<table border="-1" id="connectTable">';
+								infowindowtext += '<tr>';
+								infowindowtext +=    '<th>Passenger Number</th>';
+								infowindowtext +=    '<th>Your Destination</th>';
+								infowindowtext +=    '<th>Their Destination</th>';
+								infowindowtext +=    '<th>Date</th>';
+								infowindowtext +=    '<th>Accept Passengers</th>';
+								infowindowtext += '<tr>';
+								infowindowtext +=    '<th>'+ndRides[j].num_passengers+'</th>';
+								infowindowtext +=    '<th>'+dRide.destination_title+'</th>';
+								infowindowtext +=    '<th>'+ndRides[j].destination_title+'</th>';
+								infowindowtext +=    '<th>'+ndRides[j].ToD+'</th>';
+								infowindowtext +=    '<th><input type="radio" name="keys" value='+ndRides[j].key+"|"+dRide.key+' /></th>';
+								infowindowtext += '</table>';
+								infowindowtext +='<input type="submit" value="Submit">';
+								infowindowtext +='</form>';
+								
+								var cmarker = new google.maps.Marker({position:new google.maps.LatLng((ndRides[j].destination_lat)+.001, ndRides[j].destination_long)});
+						        cmarker.setOptions(icons.con);
+						        cmarker.setMap(map);
+						        google.maps.event.addListener(cmarker, "click", function()
+									   // From function() to function(latlng)
+									   {
+									       if (cmarker.getPosition()) {
+						                                   windowOpen(cmarker.getPosition(),infowindowtext);
+									       }
+									   });
+						        mc.addMarker(cmarker);
+                                inList.push(ndRides[j].key);
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+    }
+}
 function selectAddress(DooPu,rideNum,openableBoole)
 {
 
