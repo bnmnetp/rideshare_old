@@ -97,7 +97,7 @@ function initialize(mess)
 
         icons.blue = blueIcon;
 
-	var conMarker = new google.maps.MarkerImage('static/sportscar.png',
+	var conMarker = new google.maps.MarkerImage('static/cross.png',
 			new google.maps.Size(30,40),
 			null,
 			new google.maps.Point(20,20));
@@ -130,7 +130,7 @@ function initialize(mess)
         
 
 	mc = new MarkerClusterer(map);
-	mc.setGridSize(10);
+	mc.setGridSize(30);
         google.maps.event.addListener(mc, "clusterclick", function(cluster){
 	    clusterClick = true;
 	});
@@ -146,9 +146,10 @@ function initialize(mess)
         {
             addRideToMap(rides[r], r);
         }
-        clickListener = google.maps.event.addListener(map, "click", getAddress);
     }
     getRidesForConnection();
+    clickListener = google.maps.event.addListener(map, "click", getAddress);
+
     makeRideTable();
     
     if (mess) {
@@ -158,7 +159,9 @@ function initialize(mess)
 
 
 function makeRideTable() {
-    var table = document.getElementById("rideTable");
+
+
+    var table = document.getElementById("rideTableBody");
 
     for(var i = table.rows.length; i > 1;i--) {
 	table.deleteRow(i -1);
@@ -190,7 +193,7 @@ function makeRideTable() {
 	var c6 = row.insertCell(5);
 	c6.innerHTML = rides[r].comment;
     }
-
+    $("#rideTable").dataTable();
 }
 
 function getAddress(event)
@@ -210,9 +213,9 @@ function getAddress(event)
 }
 
 
-function showAddressClick(results,status) 
+function showAddressClick(results,status)
 {
-    if (!status || status != google.maps.GeocoderStatus.OK) 
+    if (!status || status != google.maps.GeocoderStatus.OK)
     {
         alert("Status:" + status);
     } 
@@ -235,7 +238,7 @@ function getNewRidePopupHTML(lat, lng, address3)
 
     full += "<form><p style=\"text-align: left;\">";
 
-    full += "<input onclick=\"newRidePopupHTMLPart2("+lat+", "+lng+", '" 
+    full += "<input onclick=\"newRidePopupHTMLPart2("+lat+", "+lng+", '"
               + address3 +"', false);\" type=\"radio\" name=\"rideType\" value=\"0\" id=\"rideType\""+"/>From "+ mycollege.name+" to <br />";
 
     full += address3 + "<br />";
@@ -1199,8 +1202,21 @@ function getRidesForConnection(){
 	    if (rides[i].driver == drivernum){
 	        driverRides.push(rides[i]);
 	    }
-	    if (rides[i].driver == "needs driver"){ //get rides with no driver
-	        ndRides.push(rides[i]);
+	    if (rides[i].driver == "needs driver"){
+            /*var request = new XMLHttpRequest();
+            var today = new Date();
+            request.open("GET","/getpass?ride_key="+ rides[i].key.toString(),false);
+            request.send(null);
+            if (request.status == 200) {
+                passengers = eval(request.responseText);
+            }
+            if (passengers){
+                alert(passengers.length);
+            }*/
+
+
+                                 //get rides with no driver
+	       ndRides.push(rides[i]);
 	    }
 	}
 
@@ -1241,8 +1257,11 @@ function getRidesForConnection(){
 								infowindowtext += '</table>';
 								infowindowtext +='<input type="submit" value="Submit">';
 								infowindowtext +='</form>';
-								
-								var cmarker = new google.maps.Marker({position:new google.maps.LatLng((ndRides[j].destination_lat)+.001, ndRides[j].destination_long)});
+
+
+								var midLat = (ndRides[j].destination_lat + dRide.destination_lat)/2
+                                var midLong = (ndRides[j].destination_long + dRide.destination_long)/2
+								var cmarker = new google.maps.Marker({position:new google.maps.LatLng(midLat, midLong)});
 						        cmarker.setOptions(icons.con);
 						        cmarker.setMap(map);
 						        google.maps.event.addListener(cmarker, "click", function()

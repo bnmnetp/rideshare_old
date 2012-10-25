@@ -164,8 +164,7 @@ class LoginHandler(BaseHandler):
                 "https://graph.facebook.com/me?" +
                 urllib.urlencode(dict(access_token=access_token))))
             schoolList = []
-            if profile["education"]:
-
+            if 'education' in profile.keys():
                 for item in profile["education"]:
                     schoolList.append(item["school"]["name"])
                 logging.debug("profile = " + str(profile))

@@ -16,7 +16,7 @@
 
 <h1 id="data" drivernum={{drivernum}} style="display:none"></h1>
 
-<form name="connectForm" action="/movepass" method="post">
+<form name="connectForm" action="handleSwitch()" method="post">
 <table border="-1" id="connectTable">
     <tr>
     <th>Passenger Number</th>
@@ -122,7 +122,12 @@
             });
         }
     }
-
+    handleSwitch = function(){
+		var request = new XMLHttpRequest();
+		request.open("POST","/movepass",false);
+		request.send(null);
+		alert("hey");
+}
 
     connectRides();
 </script>

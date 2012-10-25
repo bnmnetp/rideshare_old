@@ -43,7 +43,7 @@ else:
 import logging
 import urllib
 import os.path
-
+import random
 from model import *
 
 MAP_APIKEY=""
@@ -56,19 +56,8 @@ part_of_day_strings = { "0": "Morning", "1": "Afternoon", "2": "Evening" }
 aquery = db.Query(College)
 if aquery.count()==0:
 
-    # development site
     college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="193298730706524",appSecret="44d7cce20524dc91bf7694376aff9e1d")
-    # live site
-    #college = College(name ="Luther College", address= "700 College Drive Decorah,IA", lat =43.313059, lng=-91.799501, appId="284196238289386",appSecret="07e3ea3ffda4aa08f8c597bccd218e75")
-    #college = College(name= "LaCrosse University", address = "1725 State Street, La Crosse, WI", lat=43.812834, lng=-91.229022,appId="193298730706524",appSecret="44d7cce20524dc91bf7694376aff9e1d")
-
-
-
-
     college.put()
-
-
-
 
 class MainHandler(BaseHandler):
 
@@ -144,6 +133,15 @@ class RideQueryHandler(BaseHandler):
         self.response.out.write(json)
         logging.debug('end get')
 
+#class PassengerQueryHandler(BaseHandler):
+
+ #   def get(self):
+  #      ride_key= self.request.get('ride_key')
+
+  #      ride = db.get(db.Key(ride_key))
+   #     logging.debug()
+
+
 
 class NewRideHandler(BaseHandler):
     """
@@ -196,12 +194,13 @@ class NewRideHandler(BaseHandler):
         lat = float(latlng[0])
         lng = float(latlng[1])
         """
-        lat = float(self.request.get("lat"))
-        lng = float(self.request.get("lng"))
+        lat = float(self.request.get("lat")) * (random.random() * (1.000001-.999999) + 1.000001)
+        lng = float(self.request.get("lng")) * (random.random() * (1.000001-.999999) + 1.000001)
         checked = self.request.get("toLuther")
         if checked == 'true':
             newRide.start_point_title = self.request.get("from")
-            newRide.start_point_lat = lat
+
+            newRide.start_point_lat = lat 
             newRide.start_point_long = lng
             newRide.destination_title = mycollege.name
             newRide.destination_lat = mycollege.lat
@@ -249,8 +248,8 @@ class NewRideHandler(BaseHandler):
             logging.debug(FBUser.get_by_key_name(user.id).nickname())
             passenger.contact = number
             passenger.location = newRide.destination_title
-            passenger.lat = lat
-            passenger.lng = lng
+            passenger.lat = lat 
+            passenger.lng = lng 
             pass_key = passenger.put()
             newRide.passengers.append(pass_key)
             newRide.num_passengers = 1
@@ -322,7 +321,7 @@ The Rideshare Team
             logging.debug(self.current_user.access_token)
             #graph = facebook.GraphAPI(self.current_user.access_token)
             #graph.put_object("me", "feed", message=body)
-            #pageGraph = facebook.GraphAPI("193298730706524|48e2ec8c9b0ad817c89ad4f6.1-513076490|144494142268497|pZGsDMZLDxcSRrd_1FF5M_Q_qrY")
+            #pageGraph = facebook.GraphAPI("AAAECeZAfUaeoBAHYuYZC8NN9djZAlA6PZBpJnCWvZCxZBnDeEWQcdj3YuBZCWEJbPZA1E35QiCHqYmCxXsNkqT82tn67nMitdirfjxvZBAZBCfWzRKbCFZAHFZCH")
             #pageGraph.put_object("144494142268497","feed",message=body)
 
 class AddPassengerHandler(BaseHandler):
@@ -800,19 +799,21 @@ class DriverRatingHandler(BaseHandler):
             'numrates':numrates })
 
 class SchoolErrorHandler(BaseHandler):
+    """
+    Renders the School Error when the user's school history does not include the current institution.
+    """
 
     def get(self):
-
         doRender(self, 'schoolerror.html')
 
 class RideSuccessHandler(BaseHandler):
+
 
     def get(self):
         noDriver = 0
         noPass = 0
         goodRide = 0
-        myquery = db.Query(Ride)
-        rides = myquery.fetch(limit=1000000)
+        rides = Ride.all()
         for ride in rides:
             logging.debug(ride.driver)
             if ride.driver == None:
@@ -844,6 +845,36 @@ class IncorrectHandler(webapp.RequestHandler):
     def get(self):
         doRender(self, 'error.html', {
             'error_message': "Page does not exist."})
+
+class DatabaseHandler(BaseHandler):
+	def get(self):
+	    ID = self.request.get('ID', None)
+	    
+	    if ID is None:
+	        # First request, just get the first name out of the datastore.
+	        ride = db.Query(Ride).get()
+	        ID = ride.ID
+
+	    q = db.Query(Ride)
+	    rides = q.fetch(limit=2)
+	    current_ride = rides[0]
+	    if len(rides) == 2:
+	        next_ride = rides[1].ID
+	        next_url = '/update?ID=%s' % urllib.quote(next_ride)
+	    else:
+	        next_ride = 'FINISHED'
+	        next_url = '/'  # Finished processing, go back to main page.
+	    # In this example, the default values of 0 for num_votes and avg_rating are
+	    # acceptable, so we don't need to do anything other than call put().
+	    if not isinstance(current_ride.driver,str):
+		   current_ride.put()
+
+	    context = {
+	        'current_name': ID,
+	        'next_name': next_ride,
+	        'next_url': next_url,
+	    }
+	    self.response.out.write(template.render('update.html', context))
 
 class SignOutHandler(BaseHandler):
     def get(self):
@@ -952,6 +983,7 @@ def main():
         ('/movepass', MovePassengerHandler),
         ('/ridesuccess',RideSuccessHandler),
         ('/connectride',ConnectPageHandler),
+        ('/databasefix', DatabaseHandler),
         ('/.*', IncorrectHandler),
     ],
      debug=True)
