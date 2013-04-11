@@ -319,10 +319,10 @@ The Rideshare Team
             mail.send_mail(sender,announceAddr,subject,body)
         else:
             logging.debug(self.current_user.access_token)
-            #graph = facebook.GraphAPI(self.current_user.access_token)
-            #graph.put_object("me", "feed", message=body)
-            #pageGraph = facebook.GraphAPI("AAAECeZAfUaeoBAHYuYZC8NN9djZAlA6PZBpJnCWvZCxZBnDeEWQcdj3YuBZCWEJbPZA1E35QiCHqYmCxXsNkqT82tn67nMitdirfjxvZBAZBCfWzRKbCFZAHFZCH")
-            #pageGraph.put_object("144494142268497","feed",message=body)
+            graph = facebook.GraphAPI(self.current_user.access_token)
+            graph.put_object("me", "feed", message=body)
+            pageGraph = facebook.GraphAPI("AAAECeZAfUaeoBAHYuYZC8NN9djZAlA6PZBpJnCWvZCxZBnDeEWQcdj3YuBZCWEJbPZA1E35QiCHqYmCxXsNkqT82tn67nMitdirfjxvZBAZBCfWzRKbCFZAHFZCH")
+            pageGraph.put_object("144494142268497","feed",message=body)
 
 class AddPassengerHandler(BaseHandler):
     """
