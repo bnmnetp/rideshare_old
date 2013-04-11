@@ -11,7 +11,7 @@ import time
 import wsgiref.handlers
 import facebook
 
-from django.utils import simplejson as json
+import json as simplejson
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
@@ -41,13 +41,13 @@ class User():
 
     def __init__(self):
       self.user = FBUser.get_by_key_name(userId)
-    
+
     def nickname(self):
       return self.user.name
-  
+
 def create_logout_url(token):
     return '/auth/logout'
-        
+
 def create_login_url():
     return '/auth/login'
 
@@ -63,12 +63,12 @@ class FBUser(db.Model):
     public_link = db.StringProperty()
     rating = db.FloatProperty()
     numrates= db.IntegerProperty(default=0)
-    
+
 
 
     def nickname(self):
        return self.name
-  
+
 def get_current_user():
     return User()
 
@@ -156,7 +156,7 @@ class LoginHandler(BaseHandler):
                 "https://graph.facebook.com/oauth/access_token?" +
                 urllib.urlencode(args)).read())
             access_token = response["access_token"][-1]
-   
+
 
             # Download the user profile and cache a local instance of the
             # basic profile info

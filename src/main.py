@@ -21,7 +21,7 @@ choice = "facebook"
 import wsgiref.handlers
 import datetime
 from datetime import date
-from django.utils import simplejson
+import json as simplejson
 from google.appengine.api import mail
 
 ##from django.core import serializers
@@ -90,7 +90,7 @@ class MainHandler(BaseHandler):
             'college': mycollege,
             'address': mycollege.address,
             'nick' : user.nickname(),
-			'user': user.id,
+            'user': user.id,
             'logout':'/auth/logout',
             'mapkey':MAP_APIKEY,
             }))
@@ -153,7 +153,7 @@ class NewRideHandler(BaseHandler):
         """
         Called when a new ride needs to be added to the database.
         Probably with all of this data it should be done as a form post.
-        
+
         Arguments:
         - `self`:
         Web Arguments:
@@ -201,7 +201,7 @@ class NewRideHandler(BaseHandler):
         if checked == 'true':
             newRide.start_point_title = self.request.get("from")
 
-            newRide.start_point_lat = lat 
+            newRide.start_point_lat = lat
             newRide.start_point_long = lng
             newRide.destination_title = mycollege.name
             newRide.destination_lat = mycollege.lat
@@ -249,8 +249,8 @@ class NewRideHandler(BaseHandler):
             logging.debug(FBUser.get_by_key_name(user.id).nickname())
             passenger.contact = number
             passenger.location = newRide.destination_title
-            passenger.lat = lat 
-            passenger.lng = lng 
+            passenger.lat = lat
+            passenger.lng = lng
             pass_key = passenger.put()
             newRide.passengers.append(pass_key)
             newRide.num_passengers = 1
@@ -310,7 +310,7 @@ The Rideshare Team
             body = """
 A new ride request has been posted.  %s is looking for a ride from %s to %s on %s.
 If you are able to take this person in your car, please go to http://rideshare.luther.edu
-        
+
 Thanks,
 
 The Rideshare Team
@@ -577,7 +577,7 @@ class MovePassengerHandler(BaseHandler):
             'message' : message,
             'mapkey':MAP_APIKEY,
             }))
-        
+
 
 class HomeHandler(BaseHandler):
     """
@@ -693,7 +693,7 @@ class DeleteRideHandler(BaseHandler): #NEEDS WORK
             'message' : message,
             'mapkey':MAP_APIKEY,
             'college': mycollege,
-            'nick' : user.nickname()           
+            'nick' : user.nickname()
             }))
 
     def sendRiderEmail(self, ride, to):
@@ -770,7 +770,7 @@ class RemovePassengerHandler(BaseHandler):
             ride_list = query.fetch(limit=100)
             user = self.current_user
             greeting = ''
-        mycollege= aquery.get()
+            mycollege= aquery.get()
             if user:
                 greeting = ("Welcome, %s! (<a href=\"%s\">sign out</a>) Go to your <a href='/home'>Home Page</a>" %
                             (user.nickname(), users.create_logout_url("/")))
@@ -853,34 +853,34 @@ class IncorrectHandler(webapp.RequestHandler):
             'error_message': "Page does not exist."})
 
 class DatabaseHandler(BaseHandler):
-	def get(self):
-	    ID = self.request.get('ID', None)
-	    
-	    if ID is None:
-	        # First request, just get the first name out of the datastore.
-	        ride = db.Query(Ride).get()
-	        ID = ride.ID
+    def get(self):
+        ID = self.request.get('ID', None)
 
-	    q = db.Query(Ride)
-	    rides = q.fetch(limit=2)
-	    current_ride = rides[0]
-	    if len(rides) == 2:
-	        next_ride = rides[1].ID
-	        next_url = '/update?ID=%s' % urllib.quote(next_ride)
-	    else:
-	        next_ride = 'FINISHED'
-	        next_url = '/'  # Finished processing, go back to main page.
-	    # In this example, the default values of 0 for num_votes and avg_rating are
-	    # acceptable, so we don't need to do anything other than call put().
-	    if not isinstance(current_ride.driver,str):
-		   current_ride.put()
+        if ID is None:
+            # First request, just get the first name out of the datastore.
+            ride = db.Query(Ride).get()
+            ID = ride.ID
 
-	    context = {
-	        'current_name': ID,
-	        'next_name': next_ride,
-	        'next_url': next_url,
-	    }
-	    self.response.out.write(template.render('update.html', context))
+        q = db.Query(Ride)
+        rides = q.fetch(limit=2)
+        current_ride = rides[0]
+        if len(rides) == 2:
+            next_ride = rides[1].ID
+            next_url = '/update?ID=%s' % urllib.quote(next_ride)
+        else:
+            next_ride = 'FINISHED'
+            next_url = '/'  # Finished processing, go back to main page.
+        # In this example, the default values of 0 for num_votes and avg_rating are
+        # acceptable, so we don't need to do anything other than call put().
+        if not isinstance(current_ride.driver,str):
+           current_ride.put()
+
+        context = {
+            'current_name': ID,
+            'next_name': next_ride,
+            'next_url': next_url,
+        }
+        self.response.out.write(template.render('update.html', context))
 
 class SignOutHandler(BaseHandler):
     def get(self):
